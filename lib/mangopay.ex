@@ -25,12 +25,12 @@ defmodule Mangopay do
     Application.get_env(:mangopay, :client)
   end
 
-  def version do
+  def mangopay_version do
     "v2.01"
   end
 
-  def version_and_client_id do
-    "/#{version()}/#{Mangopay.client()[:id]}"
+  def mangopay_version_and_client_id do
+    "/#{mangopay_version()}/#{Mangopay.client()[:id]}"
   end
 
   defp authorization_header do
@@ -89,7 +89,7 @@ defmodule Mangopay do
   end
 
   defp cond_mangopay url do
-    base_url() <> version_and_client_id() <> url
+    base_url() <> mangopay_version_and_client_id() <> url
   end
 
   defp decode_map body do
@@ -104,13 +104,13 @@ defmodule Mangopay do
     cond do
       bang ->
         case {Mix.env, method} do
-          {:dev, _}  -> HTTPoison.request!(method, url, body, headers, [{"timeout", 4600, "recv_timeout", 5000}])
-          {:test, _} -> HTTPoison.request!(method, url, body, headers, [{"timeout", 50000, "recv_timeout", 50000}])
+          {:dev, _}  -> HTTPoison.request!(method, url, body, headers, [timeout: 4600, recv_timeout: 5000])
+          {:test, _} -> HTTPoison.request!(method, url, body, headers, [timeout: 50000, recv_timeout: 50000])
         end
       true ->
         case {Mix.env, method, query} do
-          {:dev, _, _}  -> HTTPoison.request(method, url, body, headers, [{"timeout", 4600, "recv_timeout", 4600}])
-          {:test, _, _} -> HTTPoison.request(method, url, body, headers, [{"timeout", :timeout, "recv_timeout", :timeout}])
+          {:dev, _, _}  -> HTTPoison.request(method, url, body, headers, [timeout: 4600, recv_timeout: 4600])
+          {:test, _, _} -> HTTPoison.request(method, url, body, headers, [timeout: :infinity, recv_timeout: :infinity])
         end
     end
   end
