@@ -1,4 +1,7 @@
 defmodule MangoPay.Query.Base do
+  @moduledoc """
+  Basic functions to query mangopay
+  """
   defmacro __using__(opts \\ nil) do
     quote do
       import MangoPay.Query.Path
