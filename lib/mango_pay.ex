@@ -8,8 +8,8 @@ defmodule MangoPay do
   Set your API key by configuring the :mangopay application.
 
   ```
-    config :mangopay, client_id: YOUR_MANGOPAY_CLIENT_ID
-    config :mangopay, passphrase: MANGOPAY_PLATFORM_KEY
+    config :mangopay, :client, id: YOUR_MANGOPAY_CLIENT_ID
+    config :mangopay, :client, passphrase: MANGOPAY_PLATFORM_KEY
   ```
   """
 
