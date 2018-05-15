@@ -31,7 +31,12 @@ defmodule MangoPay.Authorization do
    Ask for authorization token to MangoPay
   """
   def post_authorization do
-    :post |> MangoPay.request!("/v2.01/oauth/token", "{}", authorization_header(), %{}) |> get_decoded_response
+    post_authorization_request
+    |> get_decoded_response
+  end
+
+  def post_authorization_request do
+    :post |> MangoPay.request!("/v2.01/oauth/token", "{}", authorization_header(), %{})
   end
 
   defp get_decoded_response response do
