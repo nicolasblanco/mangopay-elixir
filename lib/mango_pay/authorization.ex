@@ -12,7 +12,7 @@ defmodule MangoPay.Authorization do
 
   """
   def pull_token do
-    time = Time.utc_now
+    time = :os.system_time(:seconds)
     case Agent.start(fn -> nil end, name: :token) do
       {:ok, _} ->
         post_authorization() |> get_token()
@@ -48,7 +48,7 @@ defmodule MangoPay.Authorization do
   end
 
   defp get_token token do
-    update_map = %{token: "#{token["token_type"]} #{token["access_token"]}", expires: Time.add(Time.utc_now, token["expires_in"])}
+    update_map = %{token: "#{token["token_type"]} #{token["access_token"]}", expires: :os.system_time(:seconds) + token["expires_in"]}
     :ok = Agent.update(:token, fn _ -> update_map end)
     "#{token["token_type"]} #{token["access_token"]}"
   end
