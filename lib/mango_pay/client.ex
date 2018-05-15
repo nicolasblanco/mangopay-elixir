@@ -13,8 +13,8 @@ defmodule MangoPay.Client do
       {:ok, client} = MangoPay.Client.get("client_id")
 
   """
-  def get(client_id) do
-    _get(client_id)
+  def get do
+    _get nil
   end
 
   @doc """
@@ -25,8 +25,8 @@ defmodule MangoPay.Client do
       client = MangoPay.Client.get!("client_id")
 
   """
-  def get!(client_id) do
-    _get!(client_id)
+  def get! do
+    _get! nil
   end
 
   @doc """
