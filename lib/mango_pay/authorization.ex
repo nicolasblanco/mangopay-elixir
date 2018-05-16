@@ -44,7 +44,7 @@ defmodule MangoPay.Authorization do
   end
 
   defp get_decoded_response response do
-    response.body |> :zlib.gunzip() |> Poison.decode!()
+    response |> :zlib.gunzip() |> Poison.decode!()
   end
 
   defp get_token token do

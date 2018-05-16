@@ -56,13 +56,16 @@ defmodule MangoPay do
     request!(method, url, body, headers)
   end
 
-  def request! {method, url, query} do
+  def request! {_method, url, query} do
     request!(:get, url, "", "", query)
   end
 
   def request!(method, url, body \\ "", headers \\ "", query \\ %{}) do
     {method, url, body, headers, _} = full_header_request(method, url, body, headers, query)
+
     filter_and_send(method, url, body, headers, query, true)
+    |> decode_body()
+    |> underscore_map()
   end
 
   @doc """
@@ -77,7 +80,7 @@ defmodule MangoPay do
     request(method, url, body, headers)
   end
 
-  def request {method, url, query} do
+  def request {_method, url, query} do
     request(:get, url, "", "", query)
   end
 
@@ -91,7 +94,62 @@ defmodule MangoPay do
   """
   def request(method, url, body \\ "", headers \\ "", query \\ %{}) do
     {method, url, body, headers, query} = full_header_request(method, url, body, headers, query)
-    filter_and_send(method, url, body, headers, query, false)
+
+    case filter_and_send(method, url, body, headers, query, false) do
+      {:ok, response} -> {:ok, decode_body(response) |> underscore_map()}
+      {:error, error} -> {:error, error}
+    end
+  end
+
+  defp decode_body(%{body: body}) do
+    case Poison.decode(body) do
+      {:ok, decoded_body} -> decoded_body
+      {:error, _} -> body
+    end
+  end
+
+  defp underscore_map(%{} = map) do
+    Enum.reduce(map, %{}, fn({k, v}, acc) ->
+      underscored_key = underscore_word(k) |> String.to_atom
+
+      cond do
+        is_map(v) -> Map.put_new(acc, underscored_key, underscore_map(v))
+        true -> Map.put_new(acc, underscored_key, v)
+      end
+    end)
+  end
+  defp underscore_map(result), do: result
+
+  defp underscore_word(word) do
+    word
+    |> String.replace(~r/([A-Z]+)([A-Z][a-z])/, "\\1_\\2")
+    |> String.replace(~r/([a-z\d])([A-Z])/, "\\1_\\2")
+    |> String.replace(~r/-/, "_")
+    |> String.downcase
+  end
+
+  def camelize_map(%{} = map) do
+    Enum.reduce(map, %{}, fn({k, v}, acc) ->
+      camelized_key = camelize_word(k)
+
+      cond do
+        is_map(v) -> Map.put_new(acc, camelized_key, camelize_map(v))
+        true -> Map.put_new(acc, camelized_key, v)
+      end
+    end)
+  end
+
+  def camelize_word(word) do
+    case Regex.split(~r/(?:^|[-_])|(?=[A-Z])/, to_string(word)) do
+      words ->
+        words |> Enum.filter(&(&1 != "")) |> camelize_list()
+        |> Enum.join()
+    end
+  end
+
+  defp camelize_list([]), do: []
+  defp camelize_list([h|tail]) do
+    [String.capitalize(h)] ++ camelize_list(tail)
   end
 
   defp full_header_request(method, url, body, headers, query) do
@@ -126,26 +184,25 @@ defmodule MangoPay do
     base_url() <> mangopay_version_and_client_id() <> url
   end
 
-  defp decode_map body do
-    cond do
-      is_map body    -> Poison.encode! body
-      is_list body   -> Poison.encode! body
-      is_binary body -> body
+  defp decode_map(body) when is_map(body) do
+    body
+    |> camelize_map()
+    |> Poison.encode!
+  end
+  defp decode_map(body) when is_list(body), do: Poison.encode!(body)
+  defp decode_map(body) when is_binary(body), do: body
+
+  # default request send to mangopay
+  defp filter_and_send(method, url, body, headers, query, true) do
+    case Mix.env do
+      :dev  -> HTTPoison.request!(method, url, body, headers, [params: query, timeout: 4600, recv_timeout: 5000])
+      :test -> HTTPoison.request!(method, url, body, headers, [params: query, timeout: 500000, recv_timeout: 500000])
     end
   end
-  # default request send to mangopay
-  defp filter_and_send(method, url, body, headers, query, bang) do
-    cond do
-      bang ->
-        case {Mix.env, method} do
-          {:dev, _}  -> HTTPoison.request!(method, url, body, headers, [params: query, timeout: 4600, recv_timeout: 5000])
-          {:test, _} -> HTTPoison.request!(method, url, body, headers, [params: query, timeout: 500000, recv_timeout: 500000])
-        end
-      true ->
-        case {Mix.env, method, query} do
-          {:dev, _, _}  -> HTTPoison.request(method, url, body, headers, [params: query, timeout: 4600, recv_timeout: 5000])
-          {:test, _, _} -> HTTPoison.request(method, url, body, headers, [params: query, timeout: 500000, recv_timeout: 500000])
-        end
+  defp filter_and_send(method, url, body, headers, query, _bang) do
+    case Mix.env do
+      :dev  -> HTTPoison.request(method, url, body, headers, [params: query, timeout: 4600, recv_timeout: 5000])
+      :test -> HTTPoison.request(method, url, body, headers, [params: query, timeout: 500000, recv_timeout: 500000])
     end
   end
 end
