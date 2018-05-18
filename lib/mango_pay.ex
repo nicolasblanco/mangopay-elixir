@@ -118,6 +118,7 @@ defmodule MangoPay do
       end
     end)
   end
+  defp underscore_map(result) when is_list(result), do: Enum.map(result, &(underscore_map(&1)))
   defp underscore_map(result), do: result
 
   defp underscore_word(word) do
