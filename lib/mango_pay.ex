@@ -196,14 +196,14 @@ defmodule MangoPay do
   # default request send to mangopay
   defp filter_and_send(method, url, body, headers, query, true) do
     case Mix.env do
-      :dev  -> HTTPoison.request!(method, url, body, headers, [params: query, timeout: 4600, recv_timeout: 5000])
       :test -> HTTPoison.request!(method, url, body, headers, [params: query, timeout: 500000, recv_timeout: 500000])
+      _ ->     HTTPoison.request!(method, url, body, headers, [params: query, timeout: 4600, recv_timeout: 5000])
     end
   end
   defp filter_and_send(method, url, body, headers, query, _bang) do
     case Mix.env do
-      :dev  -> HTTPoison.request(method, url, body, headers, [params: query, timeout: 4600, recv_timeout: 5000])
       :test -> HTTPoison.request(method, url, body, headers, [params: query, timeout: 500000, recv_timeout: 500000])
+      _ ->     HTTPoison.request(method, url, body, headers, [params: query, timeout: 4600, recv_timeout: 5000])
     end
   end
 end
