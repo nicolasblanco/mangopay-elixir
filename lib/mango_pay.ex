@@ -95,11 +95,17 @@ defmodule MangoPay do
   def request(method, url, body \\ "", headers \\ "", query \\ %{}) do
     {method, url, body, headers, query} = full_header_request(method, url, body, headers, query)
 
-    case filter_and_send(method, url, body, headers, query, false) do
-      {:ok, response} -> {:ok, decode_body(response) |> underscore_map()}
-      {:error, error} -> {:error, error}
-    end
+    filter_and_send(method, url, body, headers, query, false)
+    |> tuple_result_for_request
   end
+
+  defp tuple_result_for_request({:ok, %{status_code: 200} = response}) do
+    {:ok, decode_body(response) |> underscore_map()}
+  end
+  defp tuple_result_for_request({:ok, response}) do
+    {:error, decode_body(response) |> underscore_map()}
+  end
+  defp tuple_result_for_request(request), do: request
 
   defp decode_body(%{body: body}) do
     case Poison.decode(body) do
@@ -201,14 +207,9 @@ defmodule MangoPay do
     end
   end
   defp filter_and_send(method, url, body, headers, query, _bang) do
-    request = case Mix.env do
+    case Mix.env do
       :test -> HTTPoison.request(method, url, body, headers, [params: query, timeout: 500000, recv_timeout: 500000])
       _ ->     HTTPoison.request(method, url, body, headers, [params: query, timeout: 4600, recv_timeout: 5000])
-    end
-
-    case request do
-      {:ok, %{errors: %{}} = error} -> {:error, error}
-      request -> request
     end
   end
 end
