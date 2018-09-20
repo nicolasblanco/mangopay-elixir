@@ -25,7 +25,10 @@ defmodule MangoPay do
   Returns MANGOPAY_BASE_URL
   """
   def base_url do
-    "https://api.sandbox.mangopay.com"
+    case MangoPay.client()[:env] do
+      :sandbox -> "https://api.sandbox.mangopay.com"
+      :prod    -> "https://api.mangopay.com"
+    end
   end
 
 
