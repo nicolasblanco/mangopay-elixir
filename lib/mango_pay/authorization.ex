@@ -1,7 +1,7 @@
 defmodule MangoPay.Authorization do
   @moduledoc false
 
-  @authorization_header %{"Accept-Encoding": "gzip;q=1.0,deflate;q=0.6,identity;q=0.3", "Content-Type": "application/x-www-form-urlencoded", "Host": "api.sandbox.mangopay.com"}
+  @authorization_header %{"Accept-Encoding": "gzip;q=1.0,deflate;q=0.6,identity;q=0.3", "Content-Type": "application/x-www-form-urlencoded"}
 
   @doc """
   Get a authorization token.
